@@ -13,6 +13,11 @@ s3_client = boto3.client(
 
 bucket  = os.environ['AWS_HOST_BUCKET']
 
+parser = argparse.ArgumentParser(description='Put backup files to S3')
+parser.add_argument('-j', '--project', default='test', help='Project name, default=test')
+parser.add_argument('-p', '--path', default='backup', help='Path to files to backup, default=backup')
+
+args = parser.parse_args()
 
 def upload_file(file_name, bucket, object_name=None):
     """Upload a file to an S3 bucket
@@ -47,15 +52,18 @@ def object_size_check(bucket, object_name):
 def upload( project, path ):
     for root, dirs, files in os.walk(path, topdown=False):
         for name in files:
-            file_name = os.path.join(root, name)
+            file_name, file_size = os.path.join(root, name), os.path.getsize(root, name)
             object_name = project + "/backup/" + name
-            size = object_size_check(bucket, object_name)
-            if size is None:
+            object_size = object_size_check(bucket, object_name)
+            if object_size is None:
                 upload_file(file_name, bucket, object_name)
-                print('File', file_name, 'uploaded as', object_name)
+                if object_size == file_size:
+                    print('File', file_name, 'uploaded as', object_name)
+                else:
+                    print('File', file_name, 'uploadfiled, try again')
             else:
                 print('File', file_name, 'exist, please rename it')
 
 if __name__ == "__main__":
-    project, path = sys.argv[1], sys.argv[2]
+    project, path = args.project, args.path
     upload(project, path)
