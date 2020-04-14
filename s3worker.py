@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import os, sys
+import os
 import boto3
 import argparse
 import logging
@@ -52,15 +52,17 @@ def object_size_check(bucket, object_name):
 def upload( project, path ):
     for root, dirs, files in os.walk(path, topdown=False):
         for name in files:
-            file_name, file_size = os.path.join(root, name), os.path.getsize(root, name)
+            file_name = os.path.join(root, name)
+            file_size = os.path.getsize(file_name)
             object_name = project + "/backup/" + name
             object_size = object_size_check(bucket, object_name)
             if object_size is None:
                 upload_file(file_name, bucket, object_name)
+                object_size = object_size_check(bucket, object_name)
                 if object_size == file_size:
-                    print('File', file_name, 'uploaded as', object_name)
+                    print('File', file_name, file_size, 'uploaded as', object_name, object_size)
                 else:
-                    print('File', file_name, 'uploadfiled, try again')
+                    print('File', file_name, file_size, 'upload failed', object_size)
             else:
                 print('File', file_name, 'exist, please rename it')
 
