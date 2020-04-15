@@ -6,19 +6,6 @@ import argparse
 import logging
 from botocore.exceptions import ClientError
 
-s3_client = boto3.client(
-    's3',
-     endpoint_url="http://" + os.environ['AWS_ENDPOINT'],
-)
-
-bucket  = os.environ['AWS_HOST_BUCKET']
-
-parser = argparse.ArgumentParser(description='Put backup files to S3')
-parser.add_argument('-j', '--project', default='test', help='Project name, default=test')
-parser.add_argument('-p', '--path', default='backup', help='Path to files to backup, default=backup')
-
-args = parser.parse_args()
-
 def upload_file(file_name, bucket, object_name=None):
     """Upload a file to an S3 bucket
 
@@ -49,8 +36,22 @@ def object_size_check(bucket, object_name):
         if e.response['Error']['Code'] != '404':
             raise
 
+s3_client = boto3.client(
+    's3',
+     endpoint_url="http://" + os.environ['AWS_ENDPOINT'],
+)
+
+bucket  = os.environ['AWS_HOST_BUCKET']
+
+parser = argparse.ArgumentParser(description='Put backup files to S3')
+parser.add_argument('-j', '--project', default='test', 
+                    help='Project name, default=test')
+parser.add_argument('-p', '--path', default='backup', 
+                    help='Path to files to backup, default=backup')
+args = parser.parse_args()
+
 def upload( project, path ):
-    for root, dirs, files in os.walk(path, topdown=False):
+    for root, files in os.walk(path, topdown=False):
         for name in files:
             file_name = os.path.join(root, name)
             file_size = os.path.getsize(file_name)
